@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 406c1d7 (Integrasi QRIS API dengan PostgreSQL database)
 # QRIS Optimization System
 
 ## Deskripsi Proyek
@@ -63,10 +59,3 @@ qris-backend/
 └── README.md
 ```
 
-<<<<<<< HEAD
-=======
-## Lisensi
-
-MIT License
-
->>>>>>> 406c1d7 (Integrasi QRIS API dengan PostgreSQL database)
