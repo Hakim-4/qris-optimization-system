@@ -1,14 +1,145 @@
-from fastapi import APIRouter
-from app.services.legacy import call_legacy
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.schemas import QRISRequest
+
 
 router = APIRouter()
 
 
-@router.post("/inquiry")
-def inquiry():
-    result = call_legacy(endpoint="inquiry")
+def serialize_transaction(row):
     return {
-        "source": "legacy",
-        "transaction_type": "QRIS_INQUIRY",
-        "data": result,
+        "id": str(row.id),
+        "transaction_ref": row.transaction_ref,
+        "type": row.type,
+        "status": row.status,
+        "amount": float(row.amount),
+        "currency": row.currency,
+        "description": row.description,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "completed_at": row.completed_at.isoformat() if row.completed_at else None,
     }
+
+
+def validate_user_and_merchant(db: Session, user_id, merchant_id):
+    user = db.execute(
+        text("SELECT id FROM users WHERE id = :user_id AND status = 'ACTIVE'"),
+        {"user_id": str(user_id)}
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User tidak ditemukan atau tidak aktif"
+        )
+
+    merchant = db.execute(
+        text("SELECT id FROM merchants WHERE id = :merchant_id AND status = 'ACTIVE'"),
+        {"merchant_id": str(merchant_id)}
+    ).first()
+
+    if not merchant:
+        raise HTTPException(
+            status_code=404,
+            detail="Merchant tidak ditemukan atau tidak aktif"
+        )
+
+
+@router.post("/inquiry")
+def inquiry(payload: QRISRequest, db: Session = Depends(get_db)):
+    validate_user_and_merchant(db, payload.user_id, payload.merchant_id)
+
+    transaction_ref = payload.transaction_ref or f"INQ-{uuid4().hex[:12].upper()}"
+
+    try:
+        result = db.execute(
+            text("""
+                INSERT INTO transactions (
+                    transaction_ref,
+                    user_id,
+                    merchant_id,
+                    type,
+                    status,
+                    amount,
+                    currency,
+                    description,
+                    processed_at,
+                    completed_at
+                )
+                VALUES (
+                    :transaction_ref,
+                    :user_id,
+                    :merchant_id,
+                    'QRIS_INQUIRY',
+                    'SUCCESS',
+                    :amount,
+                    'IDR',
+                    :description,
+                    NOW(),
+                    NOW()
+                )
+                RETURNING
+                    id,
+                    transaction_ref,
+                    type::text AS type,
+                    status::text AS status,
+                    amount,
+                    currency,
+                    description,
+                    created_at,
+                    completed_at
+            """),
+            {
+                "transaction_ref": transaction_ref,
+                "user_id": str(payload.user_id),
+                "merchant_id": str(payload.merchant_id),
+                "amount": payload.amount,
+                "description": payload.description,
+            }
+        ).first()
+
+        db.execute(
+            text("""
+                INSERT INTO transaction_logs (
+                    transaction_id,
+                    event_name,
+                    message,
+                    metadata
+                )
+                VALUES (
+                    :transaction_id,
+                    'INQUIRY_CREATED',
+                    'Inquiry QRIS berhasil dibuat',
+                    '{}'::jsonb
+                )
+            """),
+            {
+                "transaction_id": str(result.id)
+            }
+        )
+
+        db.commit()
+
+        return {
+            "message": "Inquiry berhasil disimpan ke database",
+            "data": serialize_transaction(result)
+        }
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="transaction_ref sudah digunakan"
+        )
+
+    except Exception as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gagal membuat inquiry: {str(error)}"
+        )
