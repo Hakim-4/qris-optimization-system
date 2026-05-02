@@ -1,120 +1,53 @@
-# QRIS Optimization Backend
 
-Backend QRIS berbasis FastAPI untuk simulasi transaksi, pengujian latency, integrasi database PostgreSQL, Redis, RabbitMQ, dan simulasi sistem legacy.
+# QRIS Optimization System Backend
 
-## Fitur Utama
+## Deskripsi Proyek
+QRIS Optimization System adalah backend untuk meningkatkan performa dan mendukung transaksi real-time dengan caching dan proses asinkron. Sistem ini mensimulasikan penundaan legacy system untuk pengujian.
 
-- FastAPI sebagai API Gateway
-- Endpoint inquiry, payment, dan status transaksi
-- Simulasi legacy system dengan delay 5 sampai 10 detik
-- PostgreSQL schema melalui `database/init.sql`
-- Redis siap digunakan untuk caching
-- RabbitMQ siap digunakan untuk async processing
-- Docker Compose untuk menjalankan service lokal
+## Fitur
+- **FastAPI** sebagai API Gateway
+- **Redis** untuk caching
+- **RabbitMQ** untuk asynchronous processing
+- **PostgreSQL** untuk penyimpanan data transaksi
 
-## Struktur Project
+## Instalasi
+1. Clone repositori
+```bash
+git clone https://github.com/USERNAME/qris-backend.git
+cd qris-backend
+```
 
+2. Setup virtual environment dan install dependencies
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+.venv\Scriptsctivate  # Windows
+pip install -r requirements.txt
+```
+
+3. Jalankan Docker
+```bash
+docker-compose up --build
+```
+
+## Menjalankan API
+Jalankan API menggunakan FastAPI:
+```bash
+uvicorn main:app --reload
+```
+
+Akses di `http://localhost:8000/docs` untuk dokumentasi API.
+
+## Struktur Direktori
 ```text
-qris-backend-github-ready/
+qris-backend/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py
-│   │   ├── routes/
-│   │   │   ├── health.py
-│   │   │   ├── inquiry.py
-│   │   │   ├── payment.py
-│   │   │   └── status.py
-│   │   ├── services/
-│   │   │   └── legacy.py
-│   │   └── core/
-│   │       └── config.py
 │   ├── Dockerfile
-│   └── requirements.txt
-├── database/
-│   └── init.sql
-├── docs/
-│   └── qris_backend_full.md
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
+│   ├── docker-compose.yml
+├── requirements.txt
 └── README.md
 ```
 
-## Cara Menjalankan Lokal dengan Docker
-
-Salin file environment:
-
-```bash
-cp .env.example .env
-```
-
-Jalankan semua service:
-
-```bash
-docker compose up --build
-```
-
-Buka dokumentasi API:
-
-```text
-http://localhost:8000/docs
-```
-
-Health check:
-
-```text
-http://localhost:8000/health
-```
-
-## Endpoint Utama
-
-### Root
-
-```http
-GET /
-```
-
-### Health Check
-
-```http
-GET /health
-```
-
-### QRIS Inquiry
-
-```http
-POST /inquiry
-```
-
-### QRIS Payment
-
-```http
-POST /payment
-```
-
-### Transaction Status
-
-```http
-GET /status/{transaction_id}
-```
-
-## Cara Push ke GitHub
-
-Buat repository baru di GitHub. Jangan centang `Add README`, karena README sudah tersedia di project ini.
-
-Lalu jalankan command berikut dari folder project:
-
-```bash
-git init
-git add .
-git commit -m "Initial QRIS backend setup"
-git branch -M main
-git remote add origin https://github.com/USERNAME/NAMA-REPOSITORY.git
-git push -u origin main
-```
-
-Ganti `USERNAME` dan `NAMA-REPOSITORY` sesuai akun GitHub kamu.
-
-## Catatan Penting
-
-Jangan upload file `.env` ke GitHub. Gunakan `.env.example` sebagai contoh konfigurasi.
+## Lisensi
+MIT License
