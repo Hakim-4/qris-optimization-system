@@ -49,5 +49,3 @@ qris-backend/
 └── README.md
 ```
 
-## Lisensi
-MIT License
