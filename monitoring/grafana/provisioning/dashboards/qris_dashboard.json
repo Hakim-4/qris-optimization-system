@@ -1,0 +1,114 @@
+{
+  "title": "QRIS Optimization System",
+  "uid": "qris-main",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Transaction Rate (per second)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{
+        "expr": "rate(qris_transactions_total[1m])",
+        "legendFormat": "{{status}} - {{payment_method}}"
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Transaction Success Rate (%)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [{
+        "expr": "sum(rate(qris_transactions_total{status='success'}[5m])) / sum(rate(qris_transactions_total[5m])) * 100",
+        "legendFormat": "Success Rate"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 90},
+              {"color": "green", "value": 99}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "API P99 Latency",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{
+        "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+        "legendFormat": "p99 - {{handler}}"
+      },{
+        "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+        "legendFormat": "p50 - {{handler}}"
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Cache Hit Ratio",
+      "type": "gauge",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
+      "targets": [{
+        "expr": "qris_cache_hit_ratio * 100",
+        "legendFormat": "Hit Ratio"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 60},
+              {"color": "green", "value": 80}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Active Connections",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [{"expr": "qris_active_connections", "legendFormat": "Active"}]
+    },
+    {
+      "id": 6,
+      "title": "Transaction Amount Distribution",
+      "type": "histogram",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [{
+        "expr": "rate(qris_transaction_amount_rupiah_bucket[5m])",
+        "legendFormat": "{{le}}"
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Queue Depth (RabbitMQ)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [{
+        "expr": "qris_queue_depth",
+        "legendFormat": "{{queue_name}}"
+      }]
+    },
+    {
+      "id": 8,
+      "title": "API Error Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "targets": [{
+        "expr": "rate(qris_api_errors_total[5m])",
+        "legendFormat": "{{endpoint}} - {{error_code}}"
+      }]
+    }
+  ],
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "schemaVersion": 38
+}

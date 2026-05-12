@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.routes import inquiry, payment, status, health
 
 app = FastAPI(
@@ -7,11 +8,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
 app.include_router(health.router, tags=["Health"])
 app.include_router(inquiry.router, tags=["Inquiry"])
 app.include_router(payment.router, tags=["Payment"])
 app.include_router(status.router, tags=["Status"])
-
 
 @app.get("/")
 def root():
