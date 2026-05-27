@@ -7,6 +7,7 @@ def call_legacy(endpoint: str = "legacy"):
     """Simulate slow legacy QRIS service with 5 to 10 seconds delay."""
     delay_seconds = random.randint(5, 10)
     started_at = datetime.now(timezone.utc)
+
     time.sleep(delay_seconds)
     latency_ms = delay_seconds * 1000
 

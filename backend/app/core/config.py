@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://qris:qris_password@postgres:5432/qris_db"
     redis_url: str = "redis://redis:6379/0"
     rabbitmq_url: str = "amqp://guest:guest@rabbitmq:5672/"
+    payment_queue_name: str = "payment_queue"
 
     class Config:
         env_file = ".env"

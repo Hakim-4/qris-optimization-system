@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-from app.routes import inquiry, payment, status, health
+
+from app.routes import health, inquiry, payment, status
 
 app = FastAPI(
     title="QRIS Optimization Backend",
@@ -14,6 +15,7 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(inquiry.router, tags=["Inquiry"])
 app.include_router(payment.router, tags=["Payment"])
 app.include_router(status.router, tags=["Status"])
+
 
 @app.get("/")
 def root():
