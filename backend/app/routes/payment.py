@@ -17,7 +17,7 @@ from app.core.cache import (
 from app.core.database import get_db
 from app.core.rabbitmq import publish_payment_job
 from app.core.redis_client import set_cache
-from app.metrics import API_ERRORS
+from app.metrics import API_ERRORS, TRANSACTION_TOTAL, TRANSACTION_AMOUNT, LEGACY_LATENCY
 from app.schemas import QRISRequest
 
 router = APIRouter()
@@ -348,6 +348,10 @@ def payment(payload: QRISRequest, db: Session = Depends(get_db)):
         )
 
     safe_insert_payment_queued_log(db, str(result.id))
+
+    # Track metrics
+    TRANSACTION_TOTAL.labels(status="success", payment_method="qris").inc()
+    TRANSACTION_AMOUNT.observe(float(payload.amount))
 
     if idempotency_key:
         set_cache(idempotency_key, response, ttl=IDEMPOTENCY_CACHE_TTL_SECONDS)

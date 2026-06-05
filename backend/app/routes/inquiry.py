@@ -15,6 +15,7 @@ from app.core.database import get_db
 from app.core.redis_client import set_cache
 from app.metrics import API_ERRORS
 from app.schemas import QRISRequest
+from app.metrics import API_ERRORS, record_cache_result, CACHE_HITS, CACHE_MISSES
 
 router = APIRouter()
 
@@ -87,6 +88,17 @@ def validate_user_and_merchant(db: Session, user_id, merchant_id):
 def inquiry(payload: QRISRequest, db: Session = Depends(get_db)):
     transaction_ref = payload.transaction_ref or f"INQ-{uuid4().hex[:12].upper()}"
     idempotency_key = None
+
+    cache_check = db.execute(
+        text("""
+            SELECT COUNT(*) as cnt FROM transactions
+            WHERE merchant_id = :merchant_id
+            AND type = 'QRIS_INQUIRY'
+            AND created_at > NOW() - INTERVAL '60 seconds'
+        """),
+        {"merchant_id": str(payload.merchant_id)}
+    ).first()
+    record_cache_result(is_hit=cache_check.cnt > 0)
 
     if payload.transaction_ref:
         idempotency_key = idempotency_cache_key("inquiry", transaction_ref)
