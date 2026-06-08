@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response  # tambahkan Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -28,9 +28,10 @@ def serialize_status_transaction(row):
 
 
 @router.get("/status/{transaction_id}")
-def status(transaction_id: str, db: Session = Depends(get_db)):
+def status(transaction_id: str, response: Response, db: Session = Depends(get_db)):
     cached_status = read_cache(status_cache_key(transaction_id))
     if cached_status is not None:
+        response.headers["X-Cache"] = "HIT"
         return cached_status
 
     result = db.execute(
@@ -55,7 +56,9 @@ def status(transaction_id: str, db: Session = Depends(get_db)):
         API_ERRORS.labels(endpoint="/status", error_code="404").inc()
         raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
 
-    response = serialize_status_transaction(result)
-    set_transaction_status_cache(response)
+    response_data = serialize_status_transaction(result)
+    set_transaction_status_cache(response_data)
 
-    return response
+    response.headers["X-Cache"] = "MISS"
+
+    return response_data

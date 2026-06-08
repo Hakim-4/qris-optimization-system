@@ -1,0 +1,92 @@
+services:
+  api:
+    build: ./backend
+    container_name: qris_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  postgres:
+    image: postgres:16
+    container_name: qris_postgres
+    environment:
+      POSTGRES_DB: qris_db
+      POSTGRES_USER: qris
+      POSTGRES_PASSWORD: qris_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    container_name: qris_redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: qris_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: qris_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: qris_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: qris_redis_exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: qris_postgres_exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://qris:qris_password@postgres:5432/qris_db?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
