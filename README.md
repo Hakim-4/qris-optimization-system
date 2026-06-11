@@ -24,9 +24,7 @@ git clone https://github.com/Hakim-4/qris-optimization-system.git
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/macOS
-.venv\\Scripts
-
-ctivate  # Windows
+.venv\Scripts\activate # windows
 pip install -r requirements.txt
 ```
 
