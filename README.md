@@ -17,7 +17,6 @@ QRIS Optimization System adalah backend untuk meningkatkan performa dan mendukun
 
 ```bash
 git clone https://github.com/Hakim-4/qris-optimization-system.git
-cd qris-backend
 ```
 
 2. Setup virtual environment dan install dependencies
