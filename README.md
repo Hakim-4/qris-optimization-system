@@ -16,7 +16,7 @@ QRIS Optimization System adalah backend untuk meningkatkan performa dan mendukun
 1. Clone repositori
 
 ```bash
-git clone https://github.com/USERNAME/qris-backend.git
+git clone https://github.com/Hakim-4/qris-optimization-system.git
 cd qris-backend
 ```
 
